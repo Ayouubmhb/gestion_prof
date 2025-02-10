@@ -1,0 +1,55 @@
+export const professeurs = [
+  {
+    id: 1,
+    nom: "Dupont",
+    prenom: "Jean",
+    email: "jean.dupont@example.com",
+    telephone: "0123456789",
+    type: "permanent",
+    photo: "https://i.pravatar.cc/150?img=1",
+    matieresEnseignees: ["Informatique", "Mathématiques"],
+  },
+  {
+    id: 2,
+    nom: "Martin",
+    prenom: "Marie",
+    email: "marie.martin@example.com",
+    telephone: "0987654321",
+    type: "vacataire",
+    photo: "https://i.pravatar.cc/150?img=2",
+    matieresEnseignees: ["Physique"],
+  },
+  {
+    id: 3,
+    nom: "Bernard",
+    prenom: "Pierre",
+    email: "pierre.bernard@example.com",
+    telephone: "0123456789",
+    type: "permanent",
+    photo: "https://i.pravatar.cc/150?img=3",
+    matieresEnseignees: ["Génie logiciel"],
+  },
+  {
+    id: 4,
+    nom: "Petit",
+    prenom: "Sophie",
+    email: "sophie.petit@example.com",
+    telephone: "0987654321",
+    type: "vacataire",
+    photo: "https://i.pravatar.cc/150?img=4",
+    matieresEnseignees: ["Mathématiques", "Chimie"],
+  },
+  {
+    id: 5,
+    nom: "Robert",
+    prenom: "Luc",
+    email: "luc.robert@example.com",
+    telephone: "0123456789",
+    type: "permanent",
+    photo: "https://i.pravatar.cc/150?img=5",
+    matieresEnseignees: ["Électronique"],
+  },
+]
+
+export type Professeur = (typeof professeurs)[number]
+
