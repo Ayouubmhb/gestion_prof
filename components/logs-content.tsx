@@ -1,106 +1,142 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Search } from "lucide-react"
-import { jsPDF } from "jspdf"
-import "jspdf-autotable"
-import * as XLSX from "xlsx"
-import { toast } from "@/components/ui/use-toast"
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Download, Search } from "lucide-react";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
+import * as XLSX from "xlsx";
+import { toast } from "@/components/ui/use-toast";
 
-// Dummy data for logs
-const dummyLogs = [
-  { id: 1, utilisateur: "John Doe", action: "Connexion", date: "2023-05-01", temps: "08:30:00" },
-  { id: 2, utilisateur: "Jane Smith", action: "Création de professeur", date: "2023-05-01", temps: "09:15:00" },
-  { id: 3, utilisateur: "Alice Johnson", action: "Déconnexion", date: "2023-05-01", temps: "10:45:00" },
-  { id: 4, utilisateur: "Bob Brown", action: "Modification de profil", date: "2023-05-02", temps: "11:20:00" },
-  { id: 5, utilisateur: "Charlie Davis", action: "Connexion", date: "2023-05-02", temps: "13:00:00" },
-  // Add more dummy data as needed
-]
+// Define types for log data
+interface Log {
+  id: string;
+  utilisateur: string;
+  action: string;
+  details: string;
+  date: string;
+  temps: string;
+}
 
 export function LogsContent() {
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(10)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filteredLogs, setFilteredLogs] = useState(dummyLogs)
-  const router = useRouter()
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage] = useState<number>(10);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [logs, setLogs] = useState<Log[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const router = useRouter();
 
-  const indexOfLastItem = currentPage * itemsPerPage
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentItems = filteredLogs.slice(indexOfFirstItem, indexOfLastItem)
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber)
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log) =>
+      Object.entries(log).some(
+        ([key, value]) =>
+          ["utilisateur", "action", "date", "details", "temps"].includes(key) &&
+          typeof value === "string" &&
+          value.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, [logs, searchTerm]);
+
+  const currentItems = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = event.target.value.toLowerCase()
-    setSearchTerm(searchTerm)
-    const filteredItems = dummyLogs.filter((log) =>
-      Object.values(log).some((value) => value.toString().toLowerCase().includes(searchTerm)),
-    )
-    setFilteredLogs(filteredItems)
-    setCurrentPage(1)
-  }
+    setSearchTerm(event.target.value);
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const response = await fetch(`/api/logs/`);
+        if (!response.ok) {
+          throw new Error("Erreur lors de la récupération des logs");
+        }
+        const data = await response.json();
+        setLogs(
+          data.map((log: any) => ({
+            id: log.id,
+            utilisateur: log.user,
+            action: log.action,
+            details: log.details,
+            date: log.date,
+            temps: log.time,
+          }))
+        );
+      } catch (error) {
+        console.error("Erreur de récupération des logs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLogs();
+  }, []);
 
   const handleExportPDF = () => {
     try {
-      const doc = new jsPDF()
+      const doc = new jsPDF();
       doc.autoTable({
-        head: [["Utilisateur", "Action", "Date", "Temps"]],
-        body: filteredLogs.map((log) => [log.utilisateur, log.action, log.date, log.temps]),
-      })
-      doc.save("historiques.pdf")
+        head: [["Utilisateur", "Action", "Détails", "Date", "Temps"]],
+        body: filteredLogs.map((log) => [log.utilisateur, log.action, log.details, log.date, log.temps]),
+      });
+      doc.save("historiques.pdf");
       toast({
         title: "Export PDF réussi",
         description: "Le fichier PDF a été généré avec succès.",
-      })
+      });
     } catch (error) {
-      console.error("Error exporting PDF:", error)
+      console.error("Error exporting PDF:", error);
       toast({
         title: "Erreur lors de l'export PDF",
         description: "Une erreur s'est produite lors de la génération du fichier PDF.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const handleExportExcel = () => {
     try {
-      const workbook = XLSX.utils.book_new()
-      const worksheet = XLSX.utils.json_to_sheet(filteredLogs)
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Historiques")
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(filteredLogs);
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Historiques");
 
-      // Use writeFile with a Blob
-      const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" })
+      const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
       const blob = new Blob([excelBuffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      })
-      const url = URL.createObjectURL(blob)
+      });
+      const url = URL.createObjectURL(blob);
 
-      const link = document.createElement("a")
-      link.href = url
-      link.download = "historiques.xlsx"
-      link.click()
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "historiques.xlsx";
+      link.click();
 
-      // Clean up
-      URL.revokeObjectURL(url)
+      URL.revokeObjectURL(url);
 
       toast({
         title: "Export Excel réussi",
         description: "Le fichier Excel a été généré avec succès.",
-      })
+      });
     } catch (error) {
-      console.error("Error exporting Excel:", error)
+      console.error("Error exporting Excel:", error);
       toast({
         title: "Erreur lors de l'export Excel",
-        description: `Une erreur s'est produite lors de la génération du fichier Excel: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
+        description: `Une erreur s'est produite lors de la génération du fichier Excel: ${
+          error instanceof Error ? error.message : "Erreur inconnue"
+        }`,
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -134,6 +170,7 @@ export function LogsContent() {
             <TableRow>
               <TableHead>Utilisateur</TableHead>
               <TableHead>Action</TableHead>
+              <TableHead>Détails</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Temps</TableHead>
             </TableRow>
@@ -143,6 +180,7 @@ export function LogsContent() {
               <TableRow key={log.id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
                 <TableCell>{log.utilisateur}</TableCell>
                 <TableCell>{log.action}</TableCell>
+                <TableCell>{log.details}</TableCell>
                 <TableCell>{log.date}</TableCell>
                 <TableCell>{log.temps}</TableCell>
               </TableRow>
@@ -183,6 +221,5 @@ export function LogsContent() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
