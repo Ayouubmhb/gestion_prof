@@ -23,6 +23,56 @@ const professorSchema = z.object({
   photo: z.string().optional(),
 });
 
+export async function GET() {
+  try {
+    const professors = await prisma.professeur.findMany({
+      include: {
+        user: true,
+        matieresProfesseurs: {
+          include: {
+            matiere: true,
+          },
+        },
+      },
+    });
+
+    const transformedProfessors = professors.map(
+      (prof: {
+        id: string;
+        user: {
+          id: string;
+          nom: string;
+          prenom: string;
+          email: string;
+          telephone: string | null;
+          photo: string | null;
+        };
+        type: string;
+        matieresProfesseurs: any[];
+      }) => ({
+        id: prof.user.id,
+        nom: prof.user.nom,
+        prenom: prof.user.prenom,
+        email: prof.user.email,
+        telephone: prof.user.telephone,
+        type: prof.type,
+        matieresEnseignees: prof.matieresProfesseurs.map(
+          (mp: { matiere: { nom: string } }) => mp.matiere.nom
+        ),
+        photo: prof.user.photo,
+      })
+    );
+
+    return NextResponse.json(transformedProfessors);
+  } catch (error) {
+    console.error("Prisma error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch professors from database" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -163,6 +213,34 @@ export async function POST(request: Request) {
         error: "Failed to add professor",
         details: error instanceof Error ? error.message : "Unknown error",
       },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const data = await request.json();
+    const id = data.id;
+    console.log(id);
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Professor ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const deletedProfessor = await prisma.user.delete({
+      where: { id },
+      include: { professeur: true },
+    });
+
+    return NextResponse.json(deletedProfessor);
+  } catch (error) {
+    console.error("Error deleting professor:", error);
+    return NextResponse.json(
+      { error: "Failed to delete professor" },
       { status: 500 }
     );
   }
