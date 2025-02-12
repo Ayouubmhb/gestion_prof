@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users2, GraduationCap, Clock, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { professeurs } from "@/lib/professeurs";
 import {
   LineChart,
   Line,
@@ -27,18 +26,24 @@ interface Stats {
 
 export function DashboardContent() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [matiereCount, setMatiereCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const uniqueSubjects = new Set(
-    professeurs.flatMap((p) => p.matieresEnseignees)
-  ).size;
+
   useEffect(() => {
     async function fetchStats() {
       try {
-        const response = await fetch("/api/prof/stats");
-        const data = await response.json();
-        setStats(data);
+        const [profResponse, matiereResponse] = await Promise.all([
+          fetch("/api/prof/stats"),
+          fetch("/api/matiere"),
+        ]);
+
+        const profData = await profResponse.json();
+        const matiereData = await matiereResponse.json();
+
+        setStats(profData);
+        setMatiereCount(matiereData.total);
       } catch (error) {
-        console.error("Failed to fetch professor stats:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setLoading(false);
       }
@@ -75,7 +80,7 @@ export function DashboardContent() {
         />
         <StatCard
           label="MATIÈRES ENSEIGNÉES"
-          value={uniqueSubjects}
+          value={matiereCount}
           icon={<BookOpen className="h-7 w-7 text-[#FFB74D]" />}
           change={{ value: 8, trend: "up" }}
           iconClassName="bg-[#FFB74D]/10"
