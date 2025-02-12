@@ -13,6 +13,8 @@ const professorSchema = z.object({
   nom: z.string().min(1, "Le nom est requis"),
   prenom: z.string().min(1, "Le prénom est requis"),
   email: z.string().email("Email invalide"),
+
+
   telephone: z
     .string()
     .regex(/^\d{10}$/, "Le numéro de téléphone doit contenir 10 chiffres"),
@@ -130,7 +132,6 @@ export async function POST(request: Request) {
 
     const { nom, prenom, email, telephone, type, matieresEnseignees, photo } =
       validationResult.data;
-
     // ✅ Check if email already exists
     const existingUser = await prisma.user.findUnique({
       where: { email: email },
@@ -183,8 +184,9 @@ export async function POST(request: Request) {
           },
         },
       },
-    });
 
+    });
+    
     // ✅ Send password to user's email in French
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -202,6 +204,7 @@ export async function POST(request: Request) {
     };
 
     await transporter.sendMail(mailOptions);
+
 
     console.log("Professor created successfully:");
 
@@ -225,6 +228,8 @@ export async function DELETE(request: Request) {
     console.log(id);
 
     if (!id) {
+
+
       return NextResponse.json(
         { error: "Professor ID is required" },
         { status: 400 }
@@ -234,6 +239,7 @@ export async function DELETE(request: Request) {
     const deletedProfessor = await prisma.user.delete({
       where: { id },
       include: { professeur: true },
+
     });
 
     return NextResponse.json(deletedProfessor);
