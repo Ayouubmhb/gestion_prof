@@ -132,77 +132,73 @@ export function ProfesseursContent() {
         unit: "mm",
         format: [85, 54],
       })
-
+  
       // Add white background
       doc.setFillColor(255, 255, 255)
       doc.rect(0, 0, 85, 54, "F")
+  
+      // Add green background at the bottom
+      doc.setFillColor(1,50,46) // Dark green
+      doc.rect(0, 40, 85, 14, "F")
+  
+      // Add gold vertical line
+      doc.setDrawColor(218, 165, 32) // Gold color
+      doc.setLineWidth(0.2)
+      doc.line(60, 4, 60, 51)
+  
+      // Add "ENSEIGNANT CHERCHEUR" text
+      doc.setFontSize(14)
+      doc.setTextColor(0, 100, 0) // Dark green
+      doc.setFont("times", "bold")
+      doc.text("ENSEIGNANT", 6, 8)
+      doc.text("CHERCHEUR", 6, 13)
 
-      // Add navy blue diagonal elements
-      doc.setFillColor(28, 47, 87) // Navy blue color
-      doc.triangle(0, 0, 20, 0, 0, 20, "F") // Top left triangle
-      doc.triangle(85, 54, 85, 34, 65, 54, "F") // Bottom right triangle
-
-      // Add "Carte professionnelle" text
-      doc.setFontSize(12)
-      doc.setTextColor(28, 47, 87)
-      doc.text("Carte professionnelle", 42.5, 8, { align: "center" })
-
-      // Add main text content
-      doc.setFontSize(16)
-      doc.setFont("helvetica", "bold")
-      doc.text(`${professeur.prenom} ${professeur.nom}`, 8, 18)
-
-      doc.setFontSize(11)
-      doc.setFont("helvetica", "normal")
-      doc.text(professeur.type.toUpperCase(), 8, 24)
-
-      // Add contact information with icons
+      //horizontal line
+      doc.setDrawColor(218, 165, 32) // Gold color
+      doc.setLineWidth(0.3)
+      doc.line(18, 15, 27, 15)
+  
+      // Add department text
       doc.setFontSize(7)
-      doc.addImage("/assets/phone-icon.png", "PNG", 8, 30, 3, 3)
-      doc.text(professeur.telephone, 12, 32)
-      doc.addImage("/assets/email-icon.png", "PNG", 8, 35, 3, 3)
-      doc.text(professeur.email, 12, 37)
-
-      // Add subjects with icon
-      doc.addImage("/assets/book-icon.png", "PNG", 8, 40, 3, 3)
-      const matieresText = professeur.matieresEnseignees.join(", ")
-      const splitMatieresText = doc.splitTextToSize(matieresText, 40)
-      doc.text(splitMatieresText, 12, 42)
-
+      doc.setFont("helvetica", "normal")
+      doc.text("Département : Informatique", 6, 18)
+  
+      // Add contact information with icons
+      doc.setFontSize(5)
+      doc.setTextColor(0, 0, 0)
+      doc.addImage("/assets/user.png", "PNG", 8, 21, 3, 3)
+      doc.text(`${professeur.nom} ${professeur.prenom}`, 13, 23)
+      doc.addImage("/assets/phone.png", "PNG", 8, 25, 3, 3)
+      doc.text(professeur.telephone, 13, 27)
+      doc.addImage("/assets/email.png", "PNG", 8, 29, 3, 3)
+      doc.text(professeur.email, 13, 31)
+      doc.addImage("/assets/website.png", "PNG", 8, 33, 3, 3)
+      doc.text("www.fs.ucd.ac.ma", 13, 35)
+  
+      // Add faculty text and logo in top right
+      doc.setFontSize(4)
+      doc.setTextColor(0, 0, 0)
+      doc.addImage("/assets/fs.png", "PNG", 62, 4, 8, 8)
+      doc.setFont("courier", "normal")
+      doc.text("FACULTÉ DES", 72, 6)
+      doc.text("SCIENCES", 72, 8)
+      doc.text("EL JADIDA", 72, 10)
+  
       try {
-        // Load and add profile photo in a circular shape
+        // Add profile photo as square
         const img = await loadImage(professeur.photo || "/placeholder.svg")
-
-        // Create a temporary canvas to draw the circular image
-        const canvas = document.createElement("canvas")
-        const ctx = canvas.getContext("2d")
-        const size = 40 // Diameter of the circular image in mm
-        canvas.width = canvas.height = size * 2.83465 // Convert mm to pixels (assuming 72 dpi)
-
-        if (ctx) {
-          ctx.beginPath()
-          ctx.arc(size * 1.41732, size * 1.41732, size * 1.41732, 0, Math.PI * 2, true)
-          ctx.closePath()
-          ctx.clip()
-
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-        }
-
-        // Add the circular image to the PDF
-        doc.addImage(canvas.toDataURL(), "PNG", 60, 20, 20, 20)
-
-        // Add a circle border
-        doc.setDrawColor(28, 47, 87)
-        doc.setLineWidth(0.5)
-        doc.circle(70, 30, 10, "S")
+        doc.addImage(img, "PNG", 64, 32, 18, 18) // Square photo
+        doc.setDrawColor(0, 0, 0) // Black color
+        doc.setLineWidth(0.3) // Border thickness
+        doc.rect(64, 32, 18, 18, "D") // "D" means only draw border
       } catch (imgError) {
         console.error("Error loading image:", imgError)
         doc.setFontSize(6)
-        doc.text("Photo non disponible", 60, 30)
+        doc.text("Photo non disponible", 62, 38)
       }
-
+  
       try {
-        // Add QR code in bottom right (slightly larger)
+        // Add QR code in bottom left
         const qrCodeDataUrl = await QRCode.toDataURL(
           JSON.stringify({
             nom: professeur.nom,
@@ -211,19 +207,17 @@ export function ProfesseursContent() {
             telephone: professeur.telephone,
           }),
         )
-        doc.addImage(qrCodeDataUrl, "PNG", 68, 38, 12, 12)
+        doc.addImage(qrCodeDataUrl, "PNG", 6, 41, 12, 12)
       } catch (qrError) {
         console.error("Error generating QR code:", qrError)
       }
-
+  
       doc.save(`carte_${professeur.nom}_${professeur.prenom}.pdf`)
+  
+
     } catch (error) {
       console.error("Error generating PDF:", error)
-      /*toast({
-        title: "Erreur",
-        description: "Impossible de générer la carte.",
-        variant: "destructive",
-      })*/
+      
     }
   }
 
