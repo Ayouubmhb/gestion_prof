@@ -460,14 +460,14 @@ export function ProfesseursContent() {
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={handleExportPDF}>PDF</DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportExcel}>Excel</DropdownMenuItem>
-                <DropdownMenuItem onClick={handeExportCards}>Cards</DropdownMenuItem>
+                <DropdownMenuItem onClick={handeExportCards}>Cartes</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600">
                   <Upload className="mr-2 h-4 w-4" />
-                  Importer
+                  Excel
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
