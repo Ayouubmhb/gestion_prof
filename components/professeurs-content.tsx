@@ -35,6 +35,8 @@ import autoTable from "jspdf-autotable"
 import QRCode from "qrcode"
 import * as XLSX from "xlsx"
 import { toast, Toaster } from "react-hot-toast"
+import { profile } from "console"
+import { url } from "inspector"
 
 type Professeur = {
   id: string
@@ -184,17 +186,33 @@ export function ProfesseursContent() {
       doc.text("SCIENCES", 72, 8)
       doc.text("EL JADIDA", 72, 10)
   
-      try {
-        // Add profile photo as square
-        const img = await loadImage(professeur.photo || "/placeholder.svg")
-        doc.addImage(img, "PNG", 64, 32, 18, 18) // Square photo
-        doc.setDrawColor(0, 0, 0) // Black color
-        doc.setLineWidth(0.3) // Border thickness
-        doc.rect(64, 32, 18, 18, "D") // "D" means only draw border
-      } catch (imgError) {
-        console.error("Error loading image:", imgError)
-        doc.setFontSize(6)
-        doc.text("Photo non disponible", 62, 38)
+      // Add profile photo as square
+      if(professeur.photo){
+          try {
+
+          const img = await loadImage(professeur.photo || "/placeholder.svg")
+          doc.addImage(img, "PNG", 64, 32, 18, 18) // Square photo
+          doc.setDrawColor(0, 0, 0) // Black color
+          doc.setLineWidth(0.3) // Border thickness
+          doc.rect(64, 32, 18, 18, "D") // "D" means only draw border
+        } catch (imgError) {
+          console.error("Error loading image:", imgError)
+          doc.setFontSize(6)
+          doc.text("Photo 1 non disponible", 62, 38)
+        }
+      }else{
+        try {
+
+          const img = await loadImage("/profile-picture.png")
+          doc.addImage(img, "PNG", 64, 32, 18, 18) // Square photo
+          doc.setDrawColor(0, 0, 0) // Black color
+          doc.setLineWidth(0.3) // Border thickness
+          doc.rect(64, 32, 18, 18, "D") // "D" means only draw border
+        } catch (imgError) {
+          console.error("Error loading image:", imgError)
+          doc.setFontSize(6)
+          doc.text("Photo 2 non disponible", 62, 38)
+        }
       }
   
       try {
@@ -230,6 +248,7 @@ export function ProfesseursContent() {
       img.src = src
     })
   }
+  
 
   const handleExportPDF = () => {
     try {
@@ -287,6 +306,11 @@ export function ProfesseursContent() {
     }
   }
 
+  const handeExportCards =()=>{
+    professeurs.map((p)=>{
+      handlePrintCard(p);
+    })
+  }
   const handleImportExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log("handleImportExcel called", event.target.files)
     const file = event.target.files?.[0]
@@ -436,6 +460,7 @@ export function ProfesseursContent() {
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={handleExportPDF}>PDF</DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportExcel}>Excel</DropdownMenuItem>
+                <DropdownMenuItem onClick={handeExportCards}>Cards</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
