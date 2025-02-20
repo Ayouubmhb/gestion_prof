@@ -35,6 +35,8 @@ import autoTable from "jspdf-autotable"
 import QRCode from "qrcode"
 import * as XLSX from "xlsx"
 import { toast, Toaster } from "react-hot-toast"
+import { profile } from "console"
+import { url } from "inspector"
 
 type Professeur = {
   id: string
@@ -184,17 +186,33 @@ export function ProfesseursContent() {
       doc.text("SCIENCES", 72, 8)
       doc.text("EL JADIDA", 72, 10)
   
-      try {
-        // Add profile photo as square
-        const img = await loadImage(professeur.photo || "/placeholder.svg")
-        doc.addImage(img, "PNG", 64, 32, 18, 18) // Square photo
-        doc.setDrawColor(0, 0, 0) // Black color
-        doc.setLineWidth(0.3) // Border thickness
-        doc.rect(64, 32, 18, 18, "D") // "D" means only draw border
-      } catch (imgError) {
-        console.error("Error loading image:", imgError)
-        doc.setFontSize(6)
-        doc.text("Photo non disponible", 62, 38)
+      // Add profile photo as square
+      if(professeur.photo){
+          try {
+
+          const img = await loadImage(professeur.photo || "/placeholder.svg")
+          doc.addImage(img, "PNG", 64, 32, 18, 18) // Square photo
+          doc.setDrawColor(0, 0, 0) // Black color
+          doc.setLineWidth(0.3) // Border thickness
+          doc.rect(64, 32, 18, 18, "D") // "D" means only draw border
+        } catch (imgError) {
+          console.error("Error loading image:", imgError)
+          doc.setFontSize(6)
+          doc.text("Photo 1 non disponible", 62, 38)
+        }
+      }else{
+        try {
+
+          const img = await loadImage("/profile-picture.png")
+          doc.addImage(img, "PNG", 64, 32, 18, 18) // Square photo
+          doc.setDrawColor(0, 0, 0) // Black color
+          doc.setLineWidth(0.3) // Border thickness
+          doc.rect(64, 32, 18, 18, "D") // "D" means only draw border
+        } catch (imgError) {
+          console.error("Error loading image:", imgError)
+          doc.setFontSize(6)
+          doc.text("Photo 2 non disponible", 62, 38)
+        }
       }
   
       try {
@@ -230,6 +248,7 @@ export function ProfesseursContent() {
       img.src = src
     })
   }
+  
 
   const handleExportPDF = () => {
     try {
@@ -286,6 +305,124 @@ export function ProfesseursContent() {
       toast.error(`Erreur lors de l'export Excel: ${error instanceof Error ? error.message : "Erreur inconnue"}`)
     }
   }
+
+  const handleExportCards = async () => {
+    try {
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: [85, 54],
+      });
+  
+      for (let i = 0; i < professeurs.length; i++) {
+        const professeur = professeurs[i];
+  
+        // Ajout du fond blanc
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 0, 85, 54, "F");
+  
+        // Fond vert en bas
+        doc.setFillColor(1, 50, 46);
+        doc.rect(0, 40, 85, 14, "F");
+  
+        // Ligne dorée verticale
+        doc.setDrawColor(218, 165, 32);
+        doc.setLineWidth(0.2);
+        doc.line(60, 4, 60, 51);
+  
+        // Texte "ENSEIGNANT CHERCHEUR"
+        doc.setFontSize(14);
+        doc.setTextColor(0, 100, 0);
+        doc.setFont("times", "bold");
+        doc.text("ENSEIGNANT", 6, 8);
+        doc.text("CHERCHEUR", 6, 13);
+  
+        // Ligne horizontale
+        doc.setDrawColor(218, 165, 32);
+        doc.setLineWidth(0.3);
+        doc.line(18, 15, 27, 15);
+  
+        // Texte département
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        doc.text("Département : Informatique", 6, 18);
+  
+        // Informations personnelles avec icônes
+        doc.setFontSize(5);
+        doc.setTextColor(0, 0, 0);
+        doc.addImage("/assets/user.png", "PNG", 8, 21, 3, 3);
+        doc.text(`${professeur.nom} ${professeur.prenom}`, 13, 23);
+        doc.addImage("/assets/phone.png", "PNG", 8, 25, 3, 3);
+        doc.text(professeur.telephone, 13, 27);
+        doc.addImage("/assets/email.png", "PNG", 8, 29, 3, 3);
+        doc.text(professeur.email, 13, 31);
+        doc.addImage("/assets/website.png", "PNG", 8, 33, 3, 3);
+        doc.text("www.fs.ucd.ac.ma", 13, 35);
+  
+        // Logo et texte de la faculté
+        doc.setFontSize(4);
+        doc.setTextColor(0, 0, 0);
+        doc.addImage("/assets/fs.png", "PNG", 62, 4, 8, 8);
+        doc.setFont("courier", "normal");
+        doc.text("FACULTÉ DES", 72, 6);
+        doc.text("SCIENCES", 72, 8);
+        doc.text("EL JADIDA", 72, 10);
+  
+        // Ajout de la photo du professeur
+        if (professeur.photo) {
+          try {
+            const img = await loadImage(professeur.photo || "/placeholder.svg");
+            doc.addImage(img, "PNG", 64, 32, 18, 18);
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.3);
+            doc.rect(64, 32, 18, 18, "D");
+          } catch (imgError) {
+            console.error("Error loading image:", imgError);
+            doc.setFontSize(6);
+            doc.text("Photo non disponible", 62, 38);
+          }
+        } else {
+          try {
+            const img = await loadImage("/profile-picture.png");
+            doc.addImage(img, "PNG", 64, 32, 18, 18);
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.3);
+            doc.rect(64, 32, 18, 18, "D");
+          } catch (imgError) {
+            console.error("Error loading image:", imgError);
+            doc.setFontSize(6);
+            doc.text("Photo non disponible", 62, 38);
+          }
+        }
+  
+        // Génération et ajout du QR Code
+        try {
+          const qrCodeDataUrl = await QRCode.toDataURL(
+            JSON.stringify({
+              nom: professeur.nom,
+              prenom: professeur.prenom,
+              email: professeur.email,
+              telephone: professeur.telephone,
+            })
+          );
+          doc.addImage(qrCodeDataUrl, "PNG", 6, 41, 12, 12);
+        } catch (qrError) {
+          console.error("Error generating QR code:", qrError);
+        }
+  
+        // Ajouter une nouvelle page sauf pour le dernier professeur
+        if (i < professeurs.length - 1) {
+          doc.addPage();
+        }
+      }
+  
+      // Sauvegarde du fichier PDF unique
+      doc.save("Cartes.pdf");
+  
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
 
   const handleImportExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log("handleImportExcel called", event.target.files)
@@ -426,6 +563,9 @@ export function ProfesseursContent() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Liste des Professeurs</h1>
           <div className="flex space-x-2">
+          <Button variant="outline" className="bg-green-500 text-white hover:bg-green-600" onClick={handleExportCards}>
+            <Printer className="h-4 w-4" />
+          </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="bg-green-500 text-white hover:bg-green-600">
@@ -438,24 +578,14 @@ export function ProfesseursContent() {
                 <DropdownMenuItem onClick={handleExportExcel}>Excel</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Importer
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onSelect={(event) => {
-                    event.preventDefault()
-                    fileInputRef.current?.click()
-                  }}
-                >
-                  Excel
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600"
+            onClick={(event) => {
+              event.preventDefault()
+              fileInputRef.current?.click()
+            }}>
+              <Upload className="mr-2 h-4 w-4" />
+              Importer
+            </Button>
             <input
               id="excel-upload"
               type="file"
