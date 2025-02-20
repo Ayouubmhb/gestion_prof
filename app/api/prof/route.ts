@@ -266,4 +266,5 @@ export async function DELETE(request: Request) {
     console.error("Error deleting professor:", error);
     return NextResponse.json({ error: "Failed to delete professor" }, { status: 500 });
   }
+  
 }

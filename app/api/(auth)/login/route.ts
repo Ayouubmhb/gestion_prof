@@ -102,4 +102,5 @@ export async function POST(req: Request) {
     console.error("Login Error:", error)
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 })
   }
+  
 }

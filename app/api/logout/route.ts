@@ -53,4 +53,5 @@ export async function GET(req: Request) {
     console.error("Error during logout:", error);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
+  
 }
