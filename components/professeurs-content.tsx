@@ -576,6 +576,7 @@ export function ProfesseursContent() {
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={handleExportPDF}>PDF</DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportExcel}>Excel</DropdownMenuItem>
+                <DropdownMenuItem onClick={handeExportCards}>Cartes</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600"
