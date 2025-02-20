@@ -83,6 +83,17 @@ export async function POST(req: Request) {
       { status: 200 },
     )
 
+    const action = "Connexion";
+    const details = `${user.nom} ${user.prenom} s'est connecté.`
+    // Create log for connection
+    const newLog = await prisma.log.create({
+      data: {
+        userId: user.id,
+        action: action,
+        details: details,
+      }
+    });
+
     // Set cookie
     response.headers.set("Set-Cookie", cookie)
 

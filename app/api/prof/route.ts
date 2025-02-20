@@ -5,6 +5,7 @@ import path from "path"
 import fs from "fs/promises"
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 const prisma = new PrismaClient()
 
@@ -153,6 +154,36 @@ export async function POST(request: Request) {
       },
     })
 
+    //log adding new professor
+    // Extract the token from cookies
+    const cookieHeader = request.headers.get("cookie");
+    const token = cookieHeader?.match(/token=([^;]*)/)?.[1];
+
+    let adminId: string | null = null;
+    let adminNom: string | null = null;
+    let adminPrenom: string | null = null;
+
+    if (token) {
+      // Decode the token to get user info
+      const decodedToken = jwt.decode(token) as JwtPayload | null;
+      adminId = decodedToken?.id as string | null;
+      adminNom = decodedToken?.nom as string | null;
+      adminPrenom = decodedToken?.prenom as string | null;
+    }
+
+    const action = "Ajout d'un nouveau professeur";
+    const details = `l'administrateur ${adminNom} ${adminPrenom} a ajouté le professeur ${nom} ${prenom}.`;
+
+    if (adminId) {
+      await prisma.log.create({
+        data: {
+          userId: adminId,
+          action,
+          details,
+        },
+      });
+    }
+
     // ✅ Send password to user's email in French
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -185,23 +216,54 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-
     const data = await request.json();
     const id = data.id;
-    console.log(id);
 
     if (!id) {
-      return NextResponse.json({ error: "Professor ID is required" }, { status: 400 })
+      return NextResponse.json({ error: "Professor ID is required" }, { status: 400 });
     }
 
+    // Delete related logs and password reset entries before deleting the user
+    await prisma.log.deleteMany({ where: { userId: id } });
+    await prisma.passwordReset.deleteMany({ where: { userId: id } });
+
+    // Now delete the user
     const deletedProfessor = await prisma.user.delete({
       where: { id },
       include: { professeur: true },
-    })
+    });
 
-    return NextResponse.json(deletedProfessor)
+    // Log deletion action
+    const cookieHeader = request.headers.get("cookie");
+    const token = cookieHeader?.match(/token=([^;]*)/)?.[1];
+
+    let adminId: string | null = null;
+    let adminNom: string | null = null;
+    let adminPrenom: string | null = null;
+
+    if (token) {
+      const decodedToken = jwt.decode(token) as JwtPayload | null;
+      adminId = decodedToken?.id as string | null;
+      adminNom = decodedToken?.nom as string | null;
+      adminPrenom = decodedToken?.prenom as string | null;
+    }
+
+    const action = "Suppression d'un professeur";
+    const details = `L'administrateur ${adminNom} ${adminPrenom} a supprimé le professeur avec l'id ${id}.`;
+
+    if (adminId) {
+      await prisma.log.create({
+        data: {
+          userId: adminId,
+          action,
+          details,
+        },
+      });
+    }
+
+    return NextResponse.json(deletedProfessor);
   } catch (error) {
-    console.error("Error deleting professor:", error)
-    return NextResponse.json({ error: "Failed to delete professor" }, { status: 500 })
+    console.error("Error deleting professor:", error);
+    return NextResponse.json({ error: "Failed to delete professor" }, { status: 500 });
   }
 }

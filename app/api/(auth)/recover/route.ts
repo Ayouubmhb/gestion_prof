@@ -37,6 +37,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
     }
 
+    // Delete existing password reset entries for this user
+    await prisma.passwordReset.deleteMany({
+      where: { userId: user.id },
+    });
+
     // Generate the JWT token with user id and email
     let token = jwt.sign(
       { id: user.id, email: user.email },

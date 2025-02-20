@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client"
 import { z } from "zod"
 import path from "path"
 import fs from "fs/promises"
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 // Zod schema for professor input validation
 const professorSchema = z.object({
@@ -162,6 +163,36 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         },
       },
     });
+
+    //log adding new professor
+    // Extract the token from cookies
+    const cookieHeader = request.headers.get("cookie");
+    const token = cookieHeader?.match(/token=([^;]*)/)?.[1];
+
+    let adminId: string | null = null;
+    let adminNom: string | null = null;
+    let adminPrenom: string | null = null;
+
+    if (token) {
+      // Decode the token to get user info
+      const decodedToken = jwt.decode(token) as JwtPayload | null;
+      adminId = decodedToken?.id as string | null;
+      adminNom = decodedToken?.nom as string | null;
+      adminPrenom = decodedToken?.prenom as string | null;
+    }
+
+    const action = "Modification d'un professeur";
+    const details = `l'administrateur ${adminNom} ${adminPrenom} a modifié les informations du professeur ${nom} ${prenom}.`;
+
+    if (adminId) {
+      await prisma.log.create({
+        data: {
+          userId: adminId,
+          action,
+          details,
+        },
+      });
+    }
 
     console.log("Professor updated successfully:", updatedUser);
 
